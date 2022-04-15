@@ -582,9 +582,11 @@ contains
     end if
     call icepack_query_parameters( tfrz_option_out=tfrz_option)
     if (tfrz_option_driver  /= tfrz_option) then
-       write(errmsg,'(a)') trim(subname)//'error: tfrz_option from driver '//trim(tfrz_option_driver)//&
-            ' must be the same as tfrz_option from cice namelist '//trim(tfrz_option)
-       call abort_ice(trim(errmsg))
+       write(errmsg,'(a)') trim(subname)//'WARNING: tfrz_option from driver '//trim(tfrz_option_driver)//&
+            ' is overwriting tfrz_option from cice namelist '//trim(tfrz_option)
+       write(nu_diag,*) trim(errmsg)
+       call icepack_warnings_flush(nu_diag)
+       call icepack_init_parameters(tfrz_option_in=tfrz_option_driver)
     endif
 
     ! Flux convergence tolerance - always use the driver attribute value
@@ -595,7 +597,7 @@ contains
        read(cvalue,*) atmiter_conv_driver
        call icepack_query_parameters( atmiter_conv_out=atmiter_conv)
        if (atmiter_conv_driver /= atmiter_conv) then
-          write(errmsg,'(a,d13.5,a,d13.5)') trim(subname)//'warning: atmiter_ from driver ',&
+          write(errmsg,'(a,d13.5,a,d13.5)') trim(subname)//'WARNING: atmiter_ from driver ',&
                atmiter_conv_driver,' is overwritting atmiter_conv from cice namelist ',atmiter_conv
           write(nu_diag,*) trim(errmsg)
           call icepack_warnings_flush(nu_diag)
