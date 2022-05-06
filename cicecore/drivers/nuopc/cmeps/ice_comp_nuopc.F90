@@ -40,7 +40,7 @@ module ice_comp_nuopc
 #ifdef CESMCOUPLED
   use shr_const_mod
   use shr_orb_mod        , only : shr_orb_decl, shr_orb_params, SHR_ORB_UNDEF_REAL, SHR_ORB_UNDEF_INT
-  use ice_scam           , only : scmlat, scmlon, scol_mask, scol_frac, scol_ni, scol_nj
+  use ice_scam           , only : scmlat, scmlon, scol_mask, scol_frac, scol_ni, scol_nj, scol_area
 #endif
   use ice_timers
   use CICE_InitMod       , only : cice_init1, cice_init2
@@ -541,6 +541,9 @@ contains
        call NUOPC_CompAttributeGet(gcomp, name='scol_nj', value=cvalue, rc=rc)
        if (chkerr(rc,__LINE__,u_FILE_u)) return
        read(cvalue,*) scol_nj
+       call NUOPC_CompAttributeGet(gcomp, name='scol_area', value=cvalue, rc=rc)
+       if (chkerr(rc,__LINE__,u_FILE_u)) return
+       read(cvalue,*) scol_area
 
        call ice_mesh_create_scolumn(scmlon, scmlat, ice_mesh, rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
