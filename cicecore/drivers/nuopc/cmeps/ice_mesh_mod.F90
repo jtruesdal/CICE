@@ -427,7 +427,7 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
     ! Allocate module variable ocn_gridcell_frac
-    allocate(ocn_gridcell_frac(nx_block,ny_block,max_blocks))
+    allocate(ocn_gridcell_frac(2,2,1))
     ocn_gridcell_frac(:,:,:) = scol_frac
         
   end subroutine ice_mesh_create_scolumn
