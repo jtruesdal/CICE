@@ -2575,7 +2575,7 @@
          indxi, indxj    ! compressed indices for cells with aicen > puny
 
       real (kind=dbl_kind) :: &
-         Tsfc, sum, hbar, puny, rhos, Lfresh, rad_to_deg, rsnw_fall
+         Tsfc, sum, hbar, puny, rhos, Lfresh, rad_to_deg, rsnw_fall, Tffresh
 
       real (kind=dbl_kind), dimension(ncat) :: &
          ainit, hinit    ! initial area, thickness
@@ -2610,7 +2610,7 @@
         nt_smice_out=nt_smice, nt_smliq_out=nt_smliq, &
         nt_rhos_out=nt_rhos, nt_rsnw_out=nt_rsnw)
       call icepack_query_parameters(rhos_out=rhos, Lfresh_out=Lfresh, puny_out=puny, &
-        rad_to_deg_out=rad_to_deg, rsnw_fall_out=rsnw_fall)
+        rad_to_deg_out=rad_to_deg, rsnw_fall_out=rsnw_fall, Tffresh_out=Tffresh)
       call icepack_warnings_flush(nu_diag)
       if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
          file=__FILE__, line=__LINE__)
@@ -2735,7 +2735,9 @@
          do i = ilo, ihi
             if (tmask(i,j)) then
                ! place ice in high latitudes where ocean sfc is cold
-               if ( (sst (i,j) <= Tf(i,j)+p2) .and. &
+!              if ( (sst (i,j) <= Tf(i,j)+p2) .and. &
+               ! place ice in high latitudes where Tair is cold
+               if ( (Tair (i,j) <= Tffresh) .and. &
                     (TLAT(i,j) < edge_init_sh/rad_to_deg .or. &
                      TLAT(i,j) > edge_init_nh/rad_to_deg) ) then
                   icells = icells + 1
