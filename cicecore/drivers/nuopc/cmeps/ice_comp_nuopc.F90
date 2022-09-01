@@ -687,8 +687,6 @@ contains
        end if
     end if
 
-    call init_calendar()
-
     call calendar()     ! update calendar info
     ! NOTE: the advertise phase needs to be called after the ice
     ! initialization since the number of ice categories is needed for
@@ -791,6 +789,9 @@ contains
        endif
 
     end if
+
+    call calendar()     ! update calendar info
+
     !----------------------------------------------------------------------------
     ! reset shr logging to my log file
     !----------------------------------------------------------------------------
@@ -902,7 +903,6 @@ contains
        call state_diagnose(exportState,subname//':ES',rc=rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
     endif
-    call calendar()     ! update calendar info
 
     if (dbug > 5) call ESMF_LogWrite(subname//' done', ESMF_LOGMSG_INFO)
 
