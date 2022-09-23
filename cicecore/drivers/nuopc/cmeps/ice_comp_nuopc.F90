@@ -554,6 +554,11 @@ contains
 
        scol_valid = (scol_mask == 1)
        if (.not. scol_valid) then
+          ! Read the cice namelist as part of the call to cice_init1
+          ! Note that if single_column is true and scol_valid is not - will never get here
+          call t_startf ('cice_init1')
+          call cice_init1
+          call t_stopf ('cice_init1')
           ! Advertise fields
           call ice_advertise_fields(gcomp, importState, exportState, flds_scalar_name, rc)
           if (ChkErr(rc,__LINE__,u_FILE_u)) return
@@ -571,7 +576,7 @@ contains
     call t_startf ('cice_init1')
     call cice_init1
     call t_stopf ('cice_init1')
-
+    
     !-----------------------------------------------------------------
     ! Advertise fields
     !-----------------------------------------------------------------
