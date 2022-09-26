@@ -279,6 +279,7 @@ contains
 
   !==============================================================================
   subroutine ice_realize_fields(gcomp, mesh, flds_scalar_name, flds_scalar_num, rc)
+    use ice_scam, only : single_column
 
     ! input/output variables
     type(ESMF_GridComp)            :: gcomp
@@ -333,10 +334,10 @@ contains
          tag=subname//':CICE_Import',&
          mesh=mesh, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
-
 #ifdef CESMCOUPLED
     ! Get mesh areas from second field - using second field since the
     ! first field is the scalar field
+    if (single_column) return
 
     call ESMF_MeshGet(mesh, numOwnedElements=numOwnedElements, rc=rc)
     if (chkerr(rc,__LINE__,u_FILE_u)) return
