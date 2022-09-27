@@ -692,13 +692,6 @@ contains
        end if
     end if
 
-    call calendar()     ! update calendar info
-    ! NOTE: the advertise phase needs to be called after the ice
-    ! initialization since the number of ice categories is needed for
-    ! ice_fraction_n and mean_sw_pen_to_ocn_ifrac_n
-!    call ice_advertise_fields(gcomp, importState, exportState, flds_scalar_name, rc)
-!    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-
     call t_stopf ('cice_init_total')
 
   end subroutine InitializeAdvertise
