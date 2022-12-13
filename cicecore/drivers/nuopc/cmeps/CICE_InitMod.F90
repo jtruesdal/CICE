@@ -94,6 +94,7 @@ contains
     use ice_restoring        , only: ice_HaloRestore_init
     use ice_timers           , only: timer_total, init_ice_timers, ice_timer_start
     use ice_transport_driver , only: init_transport
+    use ice_scam             , only : scol_valid, single_column
 
     logical(kind=log_kind) :: tr_aero, tr_zaero, skl_bgc, z_tracers
     logical(kind=log_kind) :: tr_iso, tr_fsd, wave_spec, tr_snow
@@ -151,7 +152,12 @@ contains
 
     if (skl_bgc .or. z_tracers) call alloc_forcing_bgc ! allocate biogeochemistry arrays
 
-    call init_restart         ! initialize restart variables
+    if (single_column .and. .not. scol_valid) then
+       write(nu_diag,'(a)')' (CICE_InitMod) single column mode point does not contain any ocn/ice '&
+            //' - skipping restart read'
+    else
+       call init_restart         ! initialize restart variables
+    end if
     call init_diags           ! initialize diagnostic output points
     call init_history_therm   ! initialize thermo history variables
     call init_history_dyn     ! initialize dynamic history variables
