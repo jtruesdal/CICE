@@ -335,6 +335,11 @@ contains
     real(dbl_kind)              :: max_med2mod_areacor_glob
     real(dbl_kind)              :: min_mod2med_areacor_glob
     real(dbl_kind)              :: min_med2mod_areacor_glob
+    character(len=128)          :: mesh_atm
+    character(len=128)          :: mesh_lnd
+    character(len=128)          :: mesh_ocn
+    character(len=128)          :: mesh_ice
+    logical                     :: samegrid_atm_lnd_ocn_ice
     character(len=*), parameter :: subname='(ice_import_export:realize_fields)'
     !---------------------------------------------------------------------------
 
@@ -363,45 +368,78 @@ contains
          mesh=mesh, rc=rc)
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 #ifdef CESMCOUPLED
-    ! Get mesh areas from second field - using second field since the
-    ! first field is the scalar field
-    if (single_column) return
 
+    ! Determine if atm/lnd/ocn are on the same grid - if so set area correction factors to 1
+    call NUOPC_CompAttributeGet(gcomp, name='mesh_atm', value=mesh_atm, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call NUOPC_CompAttributeGet(gcomp, name='mesh_lnd', value=mesh_lnd, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call NUOPC_CompAttributeGet(gcomp, name='mesh_ocn', value=mesh_ocn, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+    call NUOPC_CompAttributeGet(gcomp, name='mesh_ice', value=mesh_ice, rc=rc)
+    if (ChkErr(rc,__LINE__,u_FILE_u)) return
+
+    samegrid_atm_lnd_ocn_ice = .false.
+    if ( trim(mesh_lnd) /= 'UNSET' .and. trim(mesh_atm) == trim(mesh_lnd) .and. &
+         trim(mesh_ocn) /= 'UNSET' .and. trim(mesh_atm) == trim(mesh_ocn) .and. &
+         trim(mesh_ice) /= 'UNSET' .and. trim(mesh_atm) == trim(mesh_ice)) then
+       samegrid_atm_lnd_ocn_ice = .true.
+    elseif ( trim(mesh_lnd) == 'UNSET' .and. trim(mesh_atm) == trim(mesh_ocn) .and. &
+                                             trim(mesh_atm) == trim(mesh_ice)) then
+       samegrid_atm_lnd_ocn_ice = .true.
+    elseif ( trim(mesh_ocn) == 'UNSET' .and. trim(mesh_atm) == trim(mesh_lnd) .and. &
+                                             trim(mesh_atm) == trim(mesh_ice)) then
+       samegrid_atm_lnd_ocn_ice = .true.
+    end if
+
+    ! allocate area correction factors
     call ESMF_MeshGet(mesh, numOwnedElements=numOwnedElements, rc=rc)
     if (chkerr(rc,__LINE__,u_FILE_u)) return
-    call ESMF_StateGet(exportState, itemName=trim(fldsFrIce(2)%stdname), field=lfield, rc=rc)
-    if (ChkErr(rc,__LINE__,u_FILE_u)) return
-    call ESMF_FieldRegridGetArea(lfield, rc=rc)
-    if (chkerr(rc,__LINE__,u_FILE_u)) return
-    call ESMF_FieldGet(lfield, farrayPtr=dataptr, rc=rc)
-    if (chkerr(rc,__LINE__,u_FILE_u)) return
-    allocate(mesh_areas(numOwnedElements))
-    mesh_areas(:) = dataptr(:)
+    allocate (mod2med_areacor(numOwnedElements))
+    allocate (med2mod_areacor(numOwnedElements))
 
-    ! Determine flux correction factors (module variables)
-    allocate(model_areas(numOwnedElements))
-    allocate(mod2med_areacor(numOwnedElements))
-    allocate(med2mod_areacor(numOwnedElements))
-    mod2med_areacor(:) = 1._dbl_kind
-    med2mod_areacor(:) = 1._dbl_kind
-    n = 0
-    do iblk = 1, nblocks
-       this_block = get_block(blocks_ice(iblk),iblk)
-       ilo = this_block%ilo
-       ihi = this_block%ihi
-       jlo = this_block%jlo
-       jhi = this_block%jhi
-       do j = jlo, jhi
-          do i = ilo, ihi
-             n = n+1
-             model_areas(n) = tarea(i,j,iblk)/(radius*radius)
-             mod2med_areacor(n) = model_areas(n) / mesh_areas(n)
-             med2mod_areacor(n) = mesh_areas(n) / model_areas(n)
+    if (single_column .or. samegrid_atm_lnd_ocn_ice) then
+
+       mod2med_areacor(:) = 1._ESMF_KIND_R8
+       med2mod_areacor(:) = 1._ESMF_KIND_R8
+
+    else
+
+       ! Get mesh areas from second field - using second field since the
+       ! first field is the scalar field
+       
+       call ESMF_StateGet(exportState, itemName=trim(fldsFrIce(2)%stdname), field=lfield, rc=rc)
+       if (ChkErr(rc,__LINE__,u_FILE_u)) return
+       call ESMF_FieldRegridGetArea(lfield, rc=rc)
+       if (chkerr(rc,__LINE__,u_FILE_u)) return
+       call ESMF_FieldGet(lfield, farrayPtr=dataptr, rc=rc)
+       if (chkerr(rc,__LINE__,u_FILE_u)) return
+       allocate(mesh_areas(numOwnedElements))
+       mesh_areas(:) = dataptr(:)
+       
+       ! Determine flux correction factors (module variables)
+       allocate(model_areas(numOwnedElements))
+       mod2med_areacor(:) = 1._dbl_kind
+       med2mod_areacor(:) = 1._dbl_kind
+       n = 0
+       do iblk = 1, nblocks
+          this_block = get_block(blocks_ice(iblk),iblk)
+          ilo = this_block%ilo
+          ihi = this_block%ihi
+          jlo = this_block%jlo
+          jhi = this_block%jhi
+          do j = jlo, jhi
+             do i = ilo, ihi
+                n = n+1
+                model_areas(n) = tarea(i,j,iblk)/(radius*radius)
+                mod2med_areacor(n) = model_areas(n) / mesh_areas(n)
+                med2mod_areacor(n) = mesh_areas(n) / model_areas(n)
+             enddo
           enddo
        enddo
-    enddo
-    deallocate(model_areas)
-    deallocate(mesh_areas)
+       deallocate(model_areas)
+       deallocate(mesh_areas)
+    end if
 
     min_mod2med_areacor = minval(mod2med_areacor)
     max_mod2med_areacor = maxval(mod2med_areacor)
