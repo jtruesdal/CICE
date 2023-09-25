@@ -407,7 +407,7 @@ contains
 
        ! Get mesh areas from second field - using second field since the
        ! first field is the scalar field
-       
+
        call ESMF_StateGet(exportState, itemName=trim(fldsFrIce(2)%stdname), field=lfield, rc=rc)
        if (ChkErr(rc,__LINE__,u_FILE_u)) return
        call ESMF_FieldRegridGetArea(lfield, rc=rc)
@@ -416,7 +416,7 @@ contains
        if (chkerr(rc,__LINE__,u_FILE_u)) return
        allocate(mesh_areas(numOwnedElements))
        mesh_areas(:) = dataptr(:)
-       
+
        ! Determine flux correction factors (module variables)
        allocate(model_areas(numOwnedElements))
        mod2med_areacor(:) = 1._dbl_kind
