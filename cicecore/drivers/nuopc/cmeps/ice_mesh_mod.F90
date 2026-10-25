@@ -472,8 +472,8 @@ contains
           write(nu_diag,'(a,f10.5)')' single column mode lon/lat does contain ocn with ocn fraction ',scol_frac
        end if
 
-       TLON  = scmlon
-       TLAT  = scmlat
+       TLON  = scmlon*pi/180._dbl_kind   ! SCAMFIX: degrees to radians
+       TLAT  = scmlat*pi/180._dbl_kind   ! SCAMFIX: degrees to radians
        tarea = scol_area
        hm    = scol_mask
        ULAT  = TLAT + pi/scol_nj
